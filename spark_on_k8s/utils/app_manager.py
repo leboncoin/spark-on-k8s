@@ -339,6 +339,7 @@ class SparkAppManager(LoggingMixin):
         container_name: str = "driver",
         env_variables: dict[str, str] | None = None,
         pod_resources: dict[str, dict[str, str]] | None = None,
+        command: list[str] | None = None,
         args: list[str] | None = None,
         image_pull_policy: Literal["Always", "Never", "IfNotPresent"] = "IfNotPresent",
         extra_labels: dict[str, str] | None = None,
@@ -396,6 +397,7 @@ class SparkAppManager(LoggingMixin):
                     container_name=container_name,
                     env_variables=env_variables,
                     pod_resources=pod_resources,
+                    command=command,
                     args=args,
                     image_pull_policy=image_pull_policy,
                     env_from_secrets=env_from_secrets,
@@ -421,6 +423,7 @@ class SparkAppManager(LoggingMixin):
         container_name: str = "driver",
         env_variables: dict[str, str] | None = None,
         pod_resources: dict[str, dict[str, str]] | None = None,
+        command: list[str] | None = None,
         args: list[str] | None = None,
         image_pull_policy: Literal["Always", "Never", "IfNotPresent"] = "IfNotPresent",
         env_from_secrets: list[str] | None = None,
@@ -459,6 +462,7 @@ class SparkAppManager(LoggingMixin):
             resources=k8s.V1ResourceRequirements(
                 **(pod_resources or {}),
             ),
+            command=command or None,
             args=args or [],
             ports=[
                 k8s.V1ContainerPort(

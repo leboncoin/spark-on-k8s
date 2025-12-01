@@ -187,6 +187,7 @@ class SparkOnK8S(LoggingMixin):
         startup_timeout: int | ArgNotSet = NOTSET,
         driver_init_containers: list[k8s.V1Container] | ArgNotSet = NOTSET,
         driver_host_aliases: list[k8s.V1HostAlias] | ArgNotSet = NOTSET,
+        driver_command: list[str] | ArgNotSet = NOTSET,
     ) -> str:
         """Submit a Spark app to Kubernetes
 
@@ -348,6 +349,8 @@ class SparkOnK8S(LoggingMixin):
             driver_init_containers = []
         if driver_host_aliases is NOTSET:
             driver_host_aliases = []
+        if driver_command is NOTSET:
+            driver_command = None
 
         spark_conf = spark_conf or {}
         main_class_parameters = app_arguments or []
@@ -441,6 +444,7 @@ class SparkOnK8S(LoggingMixin):
                 self._executor_volumes_config(volumes=volumes, volume_mounts=executor_volume_mounts)
             )
         
+        container_command = None
         driver_command_args = ["driver", "--master", "k8s://https://kubernetes.default.svc.cluster.local:443"]
         if class_name:
             driver_command_args.extend(["--class", class_name])
@@ -449,6 +453,9 @@ class SparkOnK8S(LoggingMixin):
         driver_command_args.extend(
             self._spark_config_to_arguments({**basic_conf, **spark_conf}) + [app_path, *main_class_parameters]
         )
+        if driver_command:
+            container_command = driver_command
+            driver_command_args = []
 
         all_configmaps = []
         if driver_ephemeral_configmaps_volumes:
@@ -491,6 +498,7 @@ class SparkOnK8S(LoggingMixin):
             image_pull_policy=image_pull_policy,
             namespace=namespace,
             service_account=service_account,
+            command=container_command,
             args=driver_command_args,
             extra_labels={**extra_labels, **driver_labels},
             annotations=driver_annotations,
